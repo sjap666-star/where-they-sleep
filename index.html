@@ -55,6 +55,11 @@ body.main:not(.det) .labs{-webkit-mask-image:linear-gradient(#000,#000),radial-g
 #key .k5 button svg,#key .k2 button svg,#key .kg svg{filter:url(#pearl) drop-shadow(0 0 5px rgba(20,28,90,.6))!important}
 #key .k5 button[aria-pressed="true"] svg,#key .k2 button[aria-pressed="true"] svg{filter:url(#pearl) drop-shadow(0 0 4px rgba(20,28,90,.5)) drop-shadow(0 0 11px #fff)!important}
 .dstage button svg{filter:url(#pearl) drop-shadow(0 0 5px rgba(20,28,90,.7))}
+#dock.on{bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;right:calc(max(22px,env(safe-area-inset-right,0px)) + 28px);width:clamp(70px,9.6vh,92px)!important;display:block}
+#dock.on canvas{display:block;width:clamp(70px,9.6vh,92px)!important;height:clamp(70px,9.6vh,92px)!important;margin:0!important}
+#dock.on .dbtn{position:absolute!important;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+#dock.on .dhelp{position:absolute;right:-28px;bottom:calc(100% + 12px);width:270px;text-align:right;animation:dhf 10s ease forwards;pointer-events:none}@keyframes dhf{0%,80%{opacity:1}100%{opacity:0}}
+body.det #dock.on{right:calc(max(18px,env(safe-area-inset-right,0px)) + 116px)}
 </style></head><body>
 <meta charset="utf-8">
 <meta name="google" content="notranslate">
@@ -384,6 +389,11 @@ body.main:not(.det) .labs{-webkit-mask-image:linear-gradient(#000,#000),radial-g
 #key .k5 button svg,#key .k2 button svg,#key .kg svg{filter:url(#pearl) drop-shadow(0 0 5px rgba(20,28,90,.6))!important}
 #key .k5 button[aria-pressed="true"] svg,#key .k2 button[aria-pressed="true"] svg{filter:url(#pearl) drop-shadow(0 0 4px rgba(20,28,90,.5)) drop-shadow(0 0 11px #fff)!important}
 .dstage button svg{filter:url(#pearl) drop-shadow(0 0 5px rgba(20,28,90,.7))}
+#dock.on{bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;right:calc(max(22px,env(safe-area-inset-right,0px)) + 28px);width:clamp(70px,9.6vh,92px)!important;display:block}
+#dock.on canvas{display:block;width:clamp(70px,9.6vh,92px)!important;height:clamp(70px,9.6vh,92px)!important;margin:0!important}
+#dock.on .dbtn{position:absolute!important;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+#dock.on .dhelp{position:absolute;right:-28px;bottom:calc(100% + 12px);width:270px;text-align:right;animation:dhf 10s ease forwards;pointer-events:none}@keyframes dhf{0%,80%{opacity:1}100%{opacity:0}}
+body.det #dock.on{right:calc(max(18px,env(safe-area-inset-right,0px)) + 116px)}
 </style>
 
 <canvas id="bg" aria-hidden="true"></canvas>
@@ -750,7 +760,7 @@ async function sceneOrbit(){
  const lab=document.createElement('div');lab.className='labs';lab.style.cssText='position:absolute;inset:0;pointer-events:none';root.appendChild(lab);
  const tip=document.createElement('div');tip.className='tip';root.appendChild(tip);
  const blm=document.createElement('canvas');blm.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;opacity:.95';root.insertBefore(blm,lab);const bx2=blm.getContext('2d');
- const R=new THREE.WebGLRenderer({canvas:cnv,antialias:true,alpha:true});R.setPixelRatio(Math.min(1.5,devicePixelRatio));let st=null,fr=0,bfr=0,ovR=null,tagAll=false;
+ const R=new THREE.WebGLRenderer({canvas:cnv,antialias:true,alpha:true});cnv.addEventListener('webglcontextlost',()=>{try{if(!sessionStorage.getItem('wtsR')){sessionStorage.setItem('wtsR','1');setTimeout(()=>location.reload(),500)}}catch(e){}});R.setPixelRatio(Math.min(1.5,devicePixelRatio));let st=null,fr=0,bfr=0,ovR=null,tagAll=false;
  const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(38,1,.5,4000);
  // --- textures
  const TEX={};async function texFor(key,shape){if(TEX[key])return TEX[key];const {vb,g}=shape;const a=vb[2]/vb[3];const H=220,W=Math.max(40,Math.round(H*a)),P=58;
@@ -1907,7 +1917,7 @@ const CAM=(()=>{let vision=null,pose=null,hand=null,stream=null,video=null,loadi
  async function load(){if(loading)return loading;loading=(async()=>{
    const mp=await import(new URL('mp/vision_bundle.mjs',location.href).href);
    vision=await mp.FilesetResolver.forVisionTasks(new URL('mp/wasm',location.href).href);
-   const mk=async(Cls,file,opts)=>{const buf=new Uint8Array(await (await fetch(new URL(file,location.href).href)).arrayBuffer());for(const delegate of ['GPU','CPU']){try{return await Cls.createFromOptions(vision,{baseOptions:{modelAssetBuffer:buf,delegate},runningMode:'VIDEO',...opts})}catch(e){if(delegate==='CPU')throw e}}};
+   const mk=async(Cls,file,opts)=>{const buf=new Uint8Array(await (await fetch(new URL(file,location.href).href)).arrayBuffer());for(const delegate of ['CPU','GPU']){try{return await Cls.createFromOptions(vision,{baseOptions:{modelAssetBuffer:buf,delegate},runningMode:'VIDEO',...opts})}catch(e){if(delegate==='GPU')throw e}}};
    return {mp,mk}})();return loading}
  async function camera(){if(stream)return video;stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},facingMode:'user'},audio:false});
   video=document.createElement('video');video.playsInline=true;video.muted=true;video.srcObject=stream;await video.play();return video}
@@ -2052,7 +2062,7 @@ function handDock(){if(document.getElementById('dock'))return;const d=document.c
  function tapAt(x,y){dust.ring(x,y,28,3.2);dust.emit(x,y,24,{speed:1.6,rise:.1,size:3,life:1.2,glint:.2});cur.classList.add('tap');setTimeout(()=>cur.classList.remove('tap'),350);const el=document.elementFromPoint(x,y);if(!el)return;
   if(el.tagName==='CANVAS'&&window.__orbit&&window.__orbit.active()){window.__orbit.pick(x,y);return}
   el.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:x,clientY:y}))}
- function loop(){if(!on){sctx.clearRect(0,0,sky.width,sky.height);return}const v=CAM.video,now=performance.now(),dt=Math.min(.1,(now-lastT)/1000);lastT=now;sctx.clearRect(0,0,sky.width,sky.height);if(v&&v.readyState>=2){(YOU?ctx.clearRect(0,0,cv.width,cv.height):dreamMirror(ctx,v,cv.width,cv.height,.8));if(now-(S.ld||0)>42){S.ld=now;try{S.r=lm.detectForVideo(v,now)}catch(e){}}const r=S.r;
+ function loop(){if(!on){sctx.clearRect(0,0,sky.width,sky.height);return}const v=CAM.video,now=performance.now(),dt=Math.min(.1,(now-lastT)/1000);lastT=now;sctx.clearRect(0,0,sky.width,sky.height);if(v&&v.readyState>=2){dreamMirror(ctx,v,cv.width,cv.height,.8);if(now-(S.ld||0)>42){S.ld=now;try{S.r=lm.detectForVideo(v,now)}catch(e){}}const r=S.r;
    const hs=(r&&r.landmarks)||[];hs.forEach(h=>{const L=[[0,1,2,3,4],[0,5,6,7,8],[9,10,11,12],[13,14,15,16],[0,17,18,19,20],[5,9,13,17]];ctx.save();ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.shadowColor='#fff';ctx.shadowBlur=8;L.forEach(ch=>{ctx.beginPath();ch.forEach((i,j)=>{const X=MX(h[i].x),Y=h[i].y*cv.height;j?ctx.lineTo(X,Y):ctx.moveTo(X,Y)});ctx.stroke()});ctx.restore();
     [4,8,12,16,20].forEach(i=>{const X=MX(h[i].x),Y=h[i].y*cv.height;if(Math.random()<.5)mini.emit(X,Y,1,{speed:.2,rise:.3,size:1.6,life:1,glint:.1})});
     for(let i=0;i<21;i++)glowDot(ctx,MX(h[i].x),h[i].y*cv.height,i===8||i===4?3.4:1.8,.9)});mini.draw(ctx,dt,.6);
@@ -2089,7 +2099,7 @@ window.__cover=true;
  // a click anywhere drifts straight into the site; watching to the end (or pressing enter) opens the question the film asks
  const enter=()=>{if(gone)return;gone=true;quiet();window.__cover=false;box.classList.add('out');setTimeout(()=>{box.remove();handDock();subtitle(lastP)},1300)};
  const ask=()=>{if(gone)return;gone=true;quiet();sleepGate(h=>{handDock();if(h!=null)meetYou(h);else subtitle(lastP)});setTimeout(()=>box.remove(),1200)};
- box.addEventListener('click',enter);v.addEventListener('ended',ask);const bar=box.querySelector('.iline i');v.addEventListener('timeupdate',()=>{if(v.duration)bar.style.width=(v.currentTime/v.duration*100)+'%'});
+ box.addEventListener('click',enter);v.addEventListener('ended',ask);try{if(sessionStorage.getItem('wtsR')==='1'){sessionStorage.setItem('wtsR','2');setTimeout(enter,60)}}catch(e){}const bar=box.querySelector('.iline i');v.addEventListener('timeupdate',()=>{if(v.duration)bar.style.width=(v.currentTime/v.duration*100)+'%'});
  const onKey=e=>{if(gone){removeEventListener('keydown',onKey);return}if(e.key==='Enter'){e.preventDefault();ask();return}if(e.key==='Escape'){enter();return}if(v.muted){v.muted=false;snd.style.display='none'}};addEventListener('keydown',onKey);
  v.play().catch(()=>{v.muted=true;snd.style.display='block';v.play().catch(()=>{})});
  v.addEventListener('error',enter);setTimeout(()=>{if(!gone&&v.readyState<2&&(v.error||v.networkState===3))enter()},5000);})();
